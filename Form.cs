@@ -23,8 +23,8 @@ namespace RMU30
             ////
             userControl1.title.Text = "AGC Trim";
             userControl2.title.Text = "REAL Trim";
-            userControl3.title.Text = "PHASE Trim";
-            userControl4.title.Text = "VCO Trim";
+            userControl3.title.Text = "VCO Trim";
+            userControl4.title.Text = "PHASE Trim";
 
             ////
             userControl1.ProgressEvent += new UserControl1.EventHandler(comFunction1);
@@ -41,7 +41,17 @@ namespace RMU30
         private void Form1_Reload(object sender, EventArgs e)
         {
         }
-               
+
+        /// <summary>
+        /// 
+        /// </summary>
+
+        public class RecvData
+        {
+            public int data { get; set; }
+            public int status { get; set; }
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -56,21 +66,24 @@ namespace RMU30
             //// Zappingの場合の実行確認            
             if (!msgZapping(func)) return;
 
-            //// ステータス表示
+            //// ログ表示
             msgFunction(func, addr);
 
             //// シリアル通信
-            int recvdata = execSerial(func, addr, (int)userControl1.numericWrite.Value);
+            RecvData recvdata = execSerial(func, addr, (int)userControl1.numericWrite.Value);
 
             ////
-            if (recvdata < 0)
+            if (recvdata.data < 0)
             {
                 StatusWriteLine("通信エラー");
                 return;
             }
 
+            //// ステータス表示
+            userControl1.labelOTP.Text = msgStatus(recvdata.status);
+
             //// 画面表示
-            userControl1.textBoxRead.Text = recvdata.ToString();
+            userControl1.textBoxRead.Text = recvdata.data.ToString();
         }
 
         public void comFunction2(int func)
@@ -83,21 +96,24 @@ namespace RMU30
             //// Zappingの場合の実行確認            
             if (!msgZapping(func)) return;
 
-            //// ステータス表示
+            //// ログ表示
             msgFunction(func, addr);
 
             //// シリアル通信
-            int recvdata = execSerial(func, addr, (int)userControl2.numericWrite.Value);
+            RecvData recvdata = execSerial(func, addr, (int)userControl2.numericWrite.Value);
 
             ////
-            if (recvdata < 0)
+            if (recvdata.data < 0)
             {
                 StatusWriteLine("通信エラー");
                 return;
             }
 
+            //// ステータス表示
+            userControl2.labelOTP.Text = msgStatus(recvdata.status);
+
             //// 画面表示
-            userControl2.textBoxRead.Text = recvdata.ToString();
+            userControl2.textBoxRead.Text = recvdata.data.ToString();
         }
 
         public void comFunction3(int func)
@@ -110,21 +126,24 @@ namespace RMU30
             //// Zappingの場合の実行確認            
             if (!msgZapping(func)) return;
 
-            //// ステータス表示
+            //// ログ表示
             msgFunction(func, addr);
 
             //// シリアル通信
-            int recvdata = execSerial(func, addr, (int)userControl3.numericWrite.Value);
+            RecvData recvdata = execSerial(func, addr, (int)userControl3.numericWrite.Value);
 
             ////
-            if (recvdata < 0)
+            if (recvdata.data < 0)
             {
                 StatusWriteLine("通信エラー");
                 return;
             }
 
+            //// ステータス表示
+            userControl3.labelOTP.Text = msgStatus(recvdata.status);
+
             //// 画面表示
-            userControl3.textBoxRead.Text = recvdata.ToString();
+            userControl3.textBoxRead.Text = recvdata.data.ToString();
         }
 
         public void comFunction4(int func)
@@ -137,49 +156,59 @@ namespace RMU30
             //// Zappingの場合の実行確認            
             if (!msgZapping(func)) return;
 
-            //// ステータス表示
+            //// ログ表示
             msgFunction(func, addr);
 
             //// シリアル通信
-            int recvdata = execSerial(func, addr, (int)userControl4.numericWrite.Value);
+            RecvData recvdata = execSerial(func, addr, (int)userControl4.numericWrite.Value);
 
             ////
-            if (recvdata < 0)
+            if (recvdata.data < 0)
             {
                 StatusWriteLine("通信エラー");
                 return;
             }
 
+            //// ステータス表示
+            userControl4.labelOTP.Text = msgStatus(recvdata.status);
+
             //// 画面表示
-            userControl4.textBoxRead.Text = recvdata.ToString();
+            userControl4.textBoxRead.Text = recvdata.data.ToString();
         }
 
         /// <summary>
         /// 
         /// </summary>
 
-        public int execSerial(int func, int addr, int value)
+        public RecvData execSerial(int func, int addr, int value)
         {
             int data = 0;
+            RecvData recvData = new RecvData();
 
             byte[] srcBuff = createPacket(func, addr, value).ToArray();
             byte[] dstBuff = new byte[defComMaxDataSize];
 
             ////
             comSerial.Send(srcBuff);
-            Thread.Sleep(1000);
+            Thread.Sleep(2000);
             int len = comSerial.Read(dstBuff);
 
             ////
             msgRecvData(dstBuff, len);
 
             ////
-            if(!parsePacket(dstBuff, len)) return -1;
+            if (!parsePacket(dstBuff, len))
+            {
+                recvData.data = -1;
+                return recvData;
+            }
 
             ////
-            data = (Func.asc2int((int)dstBuff[3]) << 4) + Func.asc2int((int)dstBuff[4]);
 
-            return data;
+            recvData.data = (Func.asc2int((int)dstBuff[3]) << 4) + Func.asc2int((int)dstBuff[4]);
+            recvData.status = (Func.asc2int((int)dstBuff[5]) << 4) + Func.asc2int((int)dstBuff[6]);
+
+            return recvData;
         }
 
         /// <summary>
@@ -287,6 +316,22 @@ namespace RMU30
                 msg = "[recv] (" + i + ")" + dstBuff[i].ToString("X2");
                 StatusWriteLine(msg);
             }
+        }
+
+        public string msgStatus(int status)
+        {
+            string msg = "[OPT] ";
+
+            int _status = (status & 0xC0);
+
+            if (_status == 0x00) msg += "ready to program.";
+            else if (_status == 0x80) msg += "fatal error.";
+            else if (_status == 0xC0) msg += "programmed successfully.";
+            else msg += "status error.";
+
+            StatusWriteLine(msg);
+
+            return msg;
         }
 
         public bool msgZapping(int func)

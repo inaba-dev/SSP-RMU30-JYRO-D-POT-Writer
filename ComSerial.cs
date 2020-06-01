@@ -38,7 +38,7 @@ namespace RMU30
             serial.StopBits = StopBits.One;
             serial.Handshake = Handshake.None;
             serial.ReadBufferSize = readSize;
-            serial.ReadTimeout = 1000;
+            serial.ReadTimeout =2500;
 
             try
             {

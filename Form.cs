@@ -59,6 +59,7 @@ namespace RMU30
         public void comFunction1(int func)
         {
             int addr = 0;
+            addr |= (userControl1.checkOWBit.Checked) ? 0x04 : 0x00;
 
             //// COMポートの接続確認
             if (!bComOpen) return;
@@ -89,6 +90,7 @@ namespace RMU30
         public void comFunction2(int func)
         {
             int addr = 1;
+            addr |= (userControl2.checkOWBit.Checked) ? 0x04 : 0x00;
 
             //// COMポートの接続確認
             if (!bComOpen) return;
@@ -119,6 +121,7 @@ namespace RMU30
         public void comFunction3(int func)
         {
             int addr = 2;
+            addr |= (userControl3.checkOWBit.Checked) ? 0x04 : 0x00;
 
             //// COMポートの接続確認
             if (!bComOpen) return;
@@ -149,6 +152,7 @@ namespace RMU30
         public void comFunction4(int func)
         {
             int addr = 3;
+            addr |= (userControl4.checkOWBit.Checked) ? 0x04 : 0x00;
 
             //// COMポートの接続確認
             if (!bComOpen) return;
@@ -190,7 +194,7 @@ namespace RMU30
 
             ////
             comSerial.Send(srcBuff);
-            Thread.Sleep(2000);
+            Thread.Sleep(3000);
             int len = comSerial.Read(dstBuff);
 
             ////
@@ -280,6 +284,8 @@ namespace RMU30
 
         public void msgFunction(int func, int type)
         {
+            StatusWriteLine("---------");
+
             string msg = "[Function] ";
 
             if (type == 0) msg += userControl1.title.Text;
@@ -301,7 +307,7 @@ namespace RMU30
             StatusWriteLine("---- [Send]");
             for (int i = 0; i < dstBuff.Count; i++)
             {
-                msg = "[send] (" + i + ")" + dstBuff[i].ToString("X2");
+                msg = "[send] (" + i + ")" + dstBuff[i].ToString("X2") + " ... " + Func.asc2int(dstBuff[i]).ToString("X1");
                 StatusWriteLine(msg);
             }
         }
@@ -313,7 +319,7 @@ namespace RMU30
             StatusWriteLine("---- [Recv]");
             for (int i = 0; i < len; i++)
             {
-                msg = "[recv] (" + i + ")" + dstBuff[i].ToString("X2");
+                msg = "[recv] (" + i + ")" + dstBuff[i].ToString("X2") + " ... " + Func.asc2int(dstBuff[i]).ToString("X1");
                 StatusWriteLine(msg);
             }
         }

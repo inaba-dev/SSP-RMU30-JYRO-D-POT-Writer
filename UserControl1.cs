@@ -17,6 +17,9 @@ namespace RMU30
             InitializeComponent();
 
             numericUpDown_dec2hex();
+            userControlBit.setWdata((int)numericWrite.Value);
+
+            userControlBit.ChangeEvent += new UserControl2.EventHandler(chngeWdata);
         }
 
         public enum FuncCode : int
@@ -64,6 +67,14 @@ namespace RMU30
         private void numericUpDown1_ValueChanged(object sender, EventArgs e)
         {
             numericUpDown_dec2hex();
+            userControlBit.setWdata((int)numericWrite.Value);
+        }
+
+        private void chngeWdata()
+        {
+            int val = userControlBit.getWdata();
+            numericWrite.Value = val;
+            this.labelW.Text = "(Hex : " + val.ToString("X2") + ")";
         }
 
         private void numericUpDown_dec2hex()
@@ -76,6 +87,7 @@ namespace RMU30
         {
             int val = Int32.Parse(textBoxRead.Text);
             this.labelR.Text = "(Hex : " + val.ToString("X2") + ")";
+            userControlBit.setRdata(val);
         }
     }
 }
